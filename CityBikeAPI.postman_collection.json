@@ -1,0 +1,337 @@
+{
+  "info": {
+    "name": "CityBike API — SDT621 Class Exercise",
+    "description": "Pre-built Postman collection for the CityBike Rental Management API.\nImport this file into Postman: File → Import → select this JSON file.\n\nSet the {{baseUrl}} variable to http://localhost:5000/api\nAfter logging in, paste your token into the {{token}} variable.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api", "type": "string" },
+    { "key": "token",   "value": "",                          "type": "string", "description": "Paste token from login response here" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register — valid rider",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Test Rider\",\n  \"email\": \"testrider@example.com\",\n  \"password\": \"MyPass@99\",\n  \"city\": \"Cape Town\"\n}"
+            },
+            "description": "TC-001: Should return 201 with rider details.\nExpected: 201 Created"
+          }
+        },
+        {
+          "name": "Register — password too short (DEF-001)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Short Pass\",\n  \"email\": \"shortpass@example.com\",\n  \"password\": \"1234567\",\n  \"city\": \"Durban\"\n}"
+            },
+            "description": "TC-002: Password has only 7 characters (below 8-char minimum).\nExpected: 400 Bad Request with validation error.\nActual (buggy): 201 Created — BUG DEF-001"
+          }
+        },
+        {
+          "name": "Register — duplicate email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Duplicate\",\n  \"email\": \"sipho@test.com\",\n  \"password\": \"MyPass@99\",\n  \"city\": \"Johannesburg\"\n}"
+            },
+            "description": "TC-003: Email already exists in the system.\nExpected: 409 Conflict + 'Email already registered.'"
+          }
+        },
+        {
+          "name": "Register — missing email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"No Email\",\n  \"email\": \"\",\n  \"password\": \"MyPass@99\",\n  \"city\": \"Cape Town\"\n}"
+            },
+            "description": "TC-004: Email field is empty.\nExpected: 400 Bad Request with validation error."
+          }
+        },
+        {
+          "name": "Login — valid credentials (rider)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sipho@test.com\",\n  \"password\": \"Sipho@123\"\n}"
+            },
+            "description": "TC-005: Valid login for a rider account.\nExpected: 200 OK + token field in response.\nCopy the token value and paste it into the {{token}} collection variable."
+          }
+        },
+        {
+          "name": "Login — valid credentials (admin)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@citybike.co.za\",\n  \"password\": \"Admin@1234\"\n}"
+            },
+            "description": "TC-006: Valid login for an admin account.\nExpected: 200 OK + token with role = admin."
+          }
+        },
+        {
+          "name": "Login — wrong password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sipho@test.com\",\n  \"password\": \"WrongPassword\"\n}"
+            },
+            "description": "TC-007: Incorrect password.\nExpected: 401 Unauthorized + 'Invalid credentials.'"
+          }
+        },
+        {
+          "name": "Login — lockout test (DEF-002) — run 5 times",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sipho@test.com\",\n  \"password\": \"WrongPassword\"\n}"
+            },
+            "description": "TC-008: Run this request 6 times with wrong password.\nExpected after 5 failures: 403 Forbidden + 'Account is locked...'\nActual (buggy): Always returns 401 — BUG DEF-002"
+          }
+        },
+        {
+          "name": "Login — locked account",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"locked@test.com\",\n  \"password\": \"Locked@123\"\n}"
+            },
+            "description": "TC-009: This account is pre-seeded as locked.\nExpected: 403 Forbidden + 'Account is locked...'"
+          }
+        },
+        {
+          "name": "Me — verify token",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/auth/me",
+            "description": "TC-010: Verify that the token from login is valid.\nExpected: 200 OK + riderId and role."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bikes",
+      "item": [
+        {
+          "name": "Get available bikes — all cities",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bikes/available",
+            "description": "TC-011: No city filter — returns all available bikes.\nExpected: 200 OK + array of bikes."
+          }
+        },
+        {
+          "name": "Get available bikes — Cape Town",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/bikes/available?city=Cape Town",
+              "query": [{ "key": "city", "value": "Cape Town" }]
+            },
+            "description": "TC-012: Filter by city = Cape Town.\nExpected: 200 OK + only Cape Town bikes."
+          }
+        },
+        {
+          "name": "Get available bikes — no results",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/bikes/available?city=Pretoria",
+              "query": [{ "key": "city", "value": "Pretoria" }]
+            },
+            "description": "TC-013: City with no bikes.\nExpected: 404 Not Found + 'No bikes are available in Pretoria.'"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Create booking — valid (login as sipho first)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bikeId\": 1,\n  \"startStation\": \"V&A Waterfront\"\n}"
+            },
+            "description": "TC-014: Valid booking. Login as sipho first and paste his token.\nExpected: 201 Created + booking details."
+          }
+        },
+        {
+          "name": "Create booking — duplicate active (DEF-003) (login as amahle first)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bikeId\": 2,\n  \"startStation\": \"Gardens\"\n}"
+            },
+            "description": "TC-015: amahle already has an active booking. Login as amahle first.\nExpected: 409 Conflict + 'You already have an active booking.'\nActual (buggy): 201 Created — BUG DEF-003"
+          }
+        },
+        {
+          "name": "Create booking — unauthenticated",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bikeId\": 1,\n  \"startStation\": \"V&A Waterfront\"\n}"
+            },
+            "description": "TC-016: No auth token provided.\nExpected: 401 Unauthorized."
+          }
+        },
+        {
+          "name": "Return bike — valid (use booking ID from TC-014)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/bookings/1001/return",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returnStation\": \"Gardens\"\n}"
+            },
+            "description": "TC-017: Return a bike. Replace 1001 with the bookingId from TC-014.\nExpected: 200 OK + completed booking with fee.\nNote: Check the feeCharged value — it should be R5 x minutes. With DEF-005 present it will be near R0."
+          }
+        },
+        {
+          "name": "Return bike — non-existent booking",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/bookings/99999/return",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"returnStation\": \"Gardens\"\n}"
+            },
+            "description": "TC-018: Booking ID does not exist.\nExpected: 404 Not Found + 'Booking 99999 not found.'"
+          }
+        },
+        {
+          "name": "Get booking — valid",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/bookings/1",
+            "description": "TC-019: Get details of booking ID 1 (seeded completed booking).\nNote: Only admin or the booking's rider can view it.\nExpected as admin: 200 OK. Expected as other rider: 403 Forbidden."
+          }
+        },
+        {
+          "name": "Get booking — not found",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/bookings/99999",
+            "description": "TC-020: Non-existent booking ID.\nExpected: 404 Not Found."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Revenue report — valid (admin token required)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/reports/revenue?startDate=2026-04-01&endDate=2026-04-30",
+              "query": [
+                { "key": "startDate", "value": "2026-04-01" },
+                { "key": "endDate",   "value": "2026-04-30" }
+              ]
+            },
+            "description": "TC-021: Valid report request. Must use admin token.\nExpected: 200 OK + revenue summary."
+          }
+        },
+        {
+          "name": "Revenue report — missing dates (DEF-004)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/reports/revenue",
+            "description": "TC-022: No date parameters provided. Must use admin token.\nExpected: 400 Bad Request + 'startDate and endDate are required.'\nActual (buggy): 500 Internal Server Error — BUG DEF-004"
+          }
+        },
+        {
+          "name": "Revenue report — rider token (no admin)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/reports/revenue?startDate=2026-04-01&endDate=2026-04-30",
+              "query": [
+                { "key": "startDate", "value": "2026-04-01" },
+                { "key": "endDate",   "value": "2026-04-30" }
+              ]
+            },
+            "description": "TC-023: Use a rider token (not admin) to call the admin-only endpoint.\nExpected: 403 Forbidden + 'Admin role required...'"
+          }
+        },
+        {
+          "name": "Revenue report — no token",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/revenue?startDate=2026-04-01&endDate=2026-04-30",
+              "query": [
+                { "key": "startDate", "value": "2026-04-01" },
+                { "key": "endDate",   "value": "2026-04-30" }
+              ]
+            },
+            "description": "TC-024: No Authorization header.\nExpected: 401 Unauthorized."
+          }
+        }
+      ]
+    }
+  ]
+}
