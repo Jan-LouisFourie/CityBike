@@ -10,6 +10,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<BikeService>();
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<RiderService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
