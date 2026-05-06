@@ -8,6 +8,8 @@ namespace CityBike.Services
 {
     public class BookingService
     {
+        private List<Booking> _bookings = new List<Booking>();
+
         public Booking CreateBooking(Booking booking)
         {
             if (booking == null)
@@ -20,15 +22,20 @@ namespace CityBike.Services
 
         public Booking ReturnBike(int bookingId)
         {
-            var booking = _booking.FirstOrDefault(b => b.Id == bookingId);
+            var booking = _bookings.FirstOrDefault(b => b.Id == bookingId);
             if (booking != null)
             {
                 booking.IsActive = false;
                 booking.EndTime = DateTime.Now;
-                booking.DurationInMinutes = (booking.EndTime - booking.StartTime).Value.TotalMinutes;
+                booking.DurationInMinutes = (int?)(booking.EndTime - booking.StartTime).Value.TotalMinutes;
                 booking.Fee = (decimal)(DateTime.Now - booking.EndTime.Value).TotalHours * 5; // Example fee calculation
             }
             return booking;
+        }
+
+        public List<Booking> GetBookings()
+        {
+            return _bookings;
         }
     }
 }
